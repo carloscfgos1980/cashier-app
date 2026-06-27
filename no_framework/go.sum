@@ -1,0 +1,8 @@
+github.com/carloscfgos1980/taskSphere-api v0.0.0-20260518190413-5d174c460a32 h1:KhlcyF2CXYBtTAqfwcojxwml3e1BWP/ZtBL/kjKjGRU=
+github.com/carloscfgos1980/taskSphere-api v0.0.0-20260518190413-5d174c460a32/go.mod h1:hIsZ2uVhze9xeqJoRNyuMECyPLtzx0msYKGQ9eV6EMA=
+github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
+github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
+github.com/joho/godotenv v1.5.1 h1:7eLL/+HRGLY0ldzfGMeQkb7vMd0as4CfYvUVzLqw0N0=
+github.com/joho/godotenv v1.5.1/go.mod h1:f4LDr5Voq0i2e/R5DDNOoa2zzDfwtkZa6DnEwAbqwq4=
+github.com/lib/pq v1.12.3 h1:tTWxr2YLKwIvK90ZXEw8GP7UFHtcbTtty8zsI+YjrfQ=
+github.com/lib/pq v1.12.3/go.mod h1:/p+8NSbOcwzAEI7wiMXFlgydTwcgTr3OSKMsD2BitpA=
