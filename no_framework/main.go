@@ -50,7 +50,8 @@ func main() {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /health", apiCfg.handlerHealth)
-	mux.HandleFunc("POST /api/bills", apiCfg.handlerBillsCreate)
+	mux.HandleFunc("GET /api/bills", apiCfg.handlerBillsGet)
+	mux.HandleFunc("POST /api/bills", apiCfg.handlerBillsCreateUpdate)
 
 	// Start the HTTP server
 	srv := &http.Server{
