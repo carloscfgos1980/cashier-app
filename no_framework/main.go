@@ -52,6 +52,8 @@ func main() {
 	mux.HandleFunc("GET /health", apiCfg.handlerHealth)
 	mux.HandleFunc("GET /api/bills", apiCfg.handlerBillsGet)
 	mux.HandleFunc("POST /api/bills", apiCfg.handlerBillsCreateUpdate)
+	mux.HandleFunc("POST /api/change", apiCfg.handlerGetChange)
+	mux.Handle("/", http.FileServer(http.Dir("client")))
 
 	// Start the HTTP server
 	srv := &http.Server{

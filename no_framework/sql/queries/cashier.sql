@@ -21,4 +21,8 @@ SET quantity = $2,
 WHERE id = $1
 RETURNING *;
 
+-- name: GetBillsTotalAmount :one
+SELECT COALESCE(SUM((denomination * quantity)::bigint), 0)::bigint AS total_amount_cents
+FROM bills;
+
 

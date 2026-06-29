@@ -53,7 +53,7 @@ func (cfg *apiConfig) handlerBillsCreateUpdate(w http.ResponseWriter, r *http.Re
 		// check if the bill already exists
 		if dbBill.ID.String() != "" {
 			// if it exists, update the quantity
-			dbBill.Quantity += b.Quantity
+			dbBill.Quantity = b.Quantity
 			_, err = cfg.db.UpdateBill(r.Context(), database.UpdateBillParams{
 				ID:       dbBill.ID,
 				Quantity: dbBill.Quantity,

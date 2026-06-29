@@ -90,6 +90,18 @@ func (q *Queries) GetBills(ctx context.Context) ([]Bill, error) {
 	return items, nil
 }
 
+const getBillsTotalAmount = `-- name: GetBillsTotalAmount :one
+SELECT COALESCE(SUM((denomination * quantity)::bigint), 0)::bigint AS total_amount_cents
+FROM bills
+`
+
+func (q *Queries) GetBillsTotalAmount(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getBillsTotalAmount)
+	var total_amount_cents int64
+	err := row.Scan(&total_amount_cents)
+	return total_amount_cents, err
+}
+
 const updateBill = `-- name: UpdateBill :one
 UPDATE bills
 SET quantity = $2,
