@@ -4,7 +4,7 @@ CREATE TABLE bills (
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
     denomination INT UNIQUE NOT NULL,
-    value INT NOT NULL
+    quantity INT NOT NULL
 );
 
 -- +goose Down

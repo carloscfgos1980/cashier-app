@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"os"
 
-	// "github.com/carloscfgos1980/cashier-app/internal/database"
+	"github.com/carloscfgos1980/cashier-app/internal/database"
 
 	"github.com/joho/godotenv"
 
@@ -15,7 +15,7 @@ import (
 
 // apiConfig holds the dependencies for the API handlers.
 type apiConfig struct {
-	// db        *database.Queries
+	db   *database.Queries
 	port string
 }
 
@@ -40,16 +40,17 @@ func main() {
 	defer dbConn.Close()
 
 	// database queries variable
-	// dbQueries := database.New(dbConn)
+	dbQueries := database.New(dbConn)
 	// variable for the apiConfig struct
 	apiCfg := apiConfig{
-		// db:        dbQueries,
+		db:   dbQueries,
 		port: port,
 	}
 	// Set up the HTTP server and routes
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /health", apiCfg.handlerHealth)
+	mux.HandleFunc("POST /api/bills", apiCfg.handlerBillsCreate)
 
 	// Start the HTTP server
 	srv := &http.Server{
