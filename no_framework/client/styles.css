@@ -100,6 +100,21 @@ h1 {
   gap: 18px;
 }
 
+#currentBillsCard {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+}
+
+#addUpdateBillsCard {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+#calculateChangeCard {
+  grid-column: 2;
+  grid-row: 2;
+}
+
 .wide {
   grid-column: 1 / -1;
 }
@@ -177,6 +192,11 @@ button {
 .ghost-button {
   background: rgba(23, 92, 77, 0.08);
   color: var(--accent);
+}
+
+.ghost-button.done-active {
+  background: linear-gradient(135deg, #1f6f8b, #14516a);
+  color: #fff;
 }
 
 .hint {
@@ -284,6 +304,13 @@ button {
   .hero,
   .grid {
     grid-template-columns: 1fr;
+  }
+
+  #currentBillsCard,
+  #addUpdateBillsCard,
+  #calculateChangeCard {
+    grid-column: auto;
+    grid-row: auto;
   }
 
   .shell {

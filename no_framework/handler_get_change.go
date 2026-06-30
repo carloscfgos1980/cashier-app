@@ -71,6 +71,32 @@ func (cfg *apiConfig) handlerGetChange(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusBadRequest, "Couldn't calculate change", err)
 		return
 	}
+	// If changeBills is empty, it means we couldn't make the exact change with the available bills.
+	if len(changeBills) == 0 {
+		respondWithError(w, http.StatusBadRequest, "Couldn't make exact change with available bills", nil)
+		return
+	}
+	// update the quantities of the bills in the database
+	for _, bill := range changeBills {
+		dbBill, err := cfg.db.GetBillByDenomination(r.Context(), int32(bill.Denomination*100))
+		if err != nil {
+			respondWithError(w, http.StatusInternalServerError, "Couldn't get bill by denomination", err)
+			return
+		}
+		newQuantity := dbBill.Quantity - bill.Quantity
+		if newQuantity < 0 {
+			respondWithError(w, http.StatusBadRequest, "Not enough bills in store for denomination", nil)
+			return
+		}
+		_, err = cfg.db.UpdateBill(r.Context(), database.UpdateBillParams{
+			ID:       dbBill.ID,
+			Quantity: newQuantity,
+		})
+		if err != nil {
+			respondWithError(w, http.StatusInternalServerError, "Couldn't update bill quantity", err)
+			return
+		}
+	}
 
 	respondWithJSON(w, http.StatusOK, formatChangeResponse(changeBills))
 

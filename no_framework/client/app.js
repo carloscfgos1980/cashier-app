@@ -2,6 +2,10 @@ const logPanel = document.getElementById("logPanel");
 const billsList = document.getElementById("billsList");
 const healthStatus = document.getElementById("healthStatus");
 const changeResult = document.getElementById("changeResult");
+const changeForm = document.getElementById("changeForm");
+const doneChangeButton = document.getElementById("doneChange");
+const amountDueInput = document.getElementById("amountDue");
+const amountPaidInput = document.getElementById("amountPaid");
 let currentBills = [];
 
 const currencyFormatter = new Intl.NumberFormat("en-US", {
@@ -22,6 +26,24 @@ function escapeHtml(value) {
 
 function formatCurrency(value) {
   return currencyFormatter.format(Number(value || 0));
+}
+
+function setDoneButtonClickedStyle() {
+  if (!doneChangeButton) {
+    return;
+  }
+  doneChangeButton.classList.add("done-active");
+  doneChangeButton.style.background = "linear-gradient(135deg, #1f6f8b, #14516a)";
+  doneChangeButton.style.color = "#fff";
+}
+
+function resetDoneButtonStyle() {
+  if (!doneChangeButton) {
+    return;
+  }
+  doneChangeButton.classList.remove("done-active");
+  doneChangeButton.style.background = "";
+  doneChangeButton.style.color = "";
 }
 
 function setLog(message, isError = false) {
@@ -142,8 +164,10 @@ async function loadBills() {
     renderBills(bills);
     logPanel.innerHTML = renderBillsSummary(bills);
     logPanel.classList.remove("error");
+    return bills;
   } catch (error) {
     setLog(error.message, true);
+    throw error;
   }
 }
 
@@ -212,12 +236,49 @@ document.getElementById("changeForm").addEventListener("submit", async (event) =
     });
     const changeAmount = Number(payload.amount_paid) - Number(payload.amount_due);
     changeResult.innerHTML = renderChangeSummary(result, changeAmount);
-    setLog("Change calculated successfully", false);
+    resetDoneButtonStyle();
+    setLog("Change calculated. Click Done to refresh current bills.", false);
   } catch (error) {
     changeResult.innerHTML = `<div class="response-card tone-error"><div class="response-kicker">Change request</div><div class="response-title">Unable to calculate</div><p class="response-message">${escapeHtml(error.message)}</p></div>`;
     setLog(error.message, true);
   }
 });
 
+async function handleDoneClick(event) {
+  if (event) {
+    event.preventDefault();
+  }
+
+  setDoneButtonClickedStyle();
+
+  if (amountDueInput) {
+    amountDueInput.value = "";
+  }
+  if (amountPaidInput) {
+    amountPaidInput.value = "";
+  }
+  changeForm.reset();
+
+  changeResult.innerHTML = "";
+
+  try {
+    const bills = await requestJson(`/api/bills?t=${Date.now()}`);
+    currentBills = Array.isArray(bills) ? bills : [];
+    renderBills(currentBills);
+    logPanel.innerHTML = renderBillsSummary(currentBills);
+    logPanel.classList.remove("error");
+    setLog("Current bills refreshed and calculate form reset", false);
+  } catch {
+    setLog("Could not refresh current bills. Try Done again.", true);
+  }
+}
+
+window.handleDoneClick = handleDoneClick;
+
+if (doneChangeButton) {
+  doneChangeButton.addEventListener("click", handleDoneClick);
+  doneChangeButton.onclick = handleDoneClick;
+}
+
 checkHealth();
-loadBills();
+loadBills().catch(() => {});
