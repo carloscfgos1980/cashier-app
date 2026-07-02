@@ -7,6 +7,7 @@ A lightweight cashier API + static web client built with Go and PostgreSQL.
 - Manage bill inventory by denomination
 - Calculate change using available bills
 - Deduct dispensed bills from inventory after change is calculated
+- Unit tests for core change-calculation behavior using `testify`
 - Simple browser client served by the same Go server
 
 ## Tech Stack
@@ -60,6 +61,30 @@ go run .
 Server starts at:
 
 - `http://localhost:8080`
+
+## Unit Testing
+
+This project includes unit tests for the pure change-calculation logic in `handler_get_change_test.go`.
+
+Current test coverage includes:
+
+- bill selection for a valid change amount
+- formatted change response lines such as `2 x €20 = 40`
+
+The tests use the `testify` package for assertions.
+
+Run all tests:
+
+```bash
+go test ./...
+```
+
+Run only the change handler tests:
+
+```bash
+go test -run TestCalculateChangeUsesAvailableBills -v
+go test -run TestFormatChangeResponseBuildsDisplayLines -v
+```
 
 ## API Routes
 

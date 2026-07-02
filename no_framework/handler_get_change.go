@@ -114,7 +114,7 @@ func formatChangeResponse(changeBills []ChangeBill) []ChangeLine {
 func formatChangeLine(quantity int32, denomination float32, total float64) string {
 	quantityText := strconv.FormatInt(int64(quantity), 10)
 	denominationText := formatEuroAmount(float64(denomination))
-	totalText := formatPlainAmount(total)
+	totalText := formatEuroAmount(total)
 	return quantityText + " x " + denominationText + " = " + totalText
 }
 
@@ -123,13 +123,6 @@ func formatEuroAmount(value float64) string {
 	formatted = strings.TrimRight(formatted, "0")
 	formatted = strings.TrimRight(formatted, ".")
 	return "€" + formatted
-}
-
-func formatPlainAmount(value float64) string {
-	formatted := strconv.FormatFloat(value, 'f', 2, 64)
-	formatted = strings.TrimRight(formatted, "0")
-	formatted = strings.TrimRight(formatted, ".")
-	return formatted
 }
 
 func calculateChange(changeAmountCents int32, bills []database.Bill) ([]ChangeBill, error) {
