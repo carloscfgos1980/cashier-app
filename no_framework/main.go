@@ -48,7 +48,7 @@ func main() {
 	}
 	// Set up the HTTP server and routes
 	mux := http.NewServeMux()
-
+	// Define the routes and their corresponding handlers
 	mux.HandleFunc("GET /health", apiCfg.handlerHealth)
 	mux.HandleFunc("GET /api/bills", apiCfg.handlerBillsGet)
 	mux.HandleFunc("POST /api/bills", apiCfg.handlerBillsCreateUpdate)

@@ -18,7 +18,7 @@ func TestCalculateChangeUsesAvailableBills(t *testing.T) {
 	got, err := calculateChange(3500, bills)
 	require.NoError(t, err)
 
-	want := []ChangeBill{
+	want := []Bill{
 		{Denomination: 20, Quantity: 1},
 		{Denomination: 10, Quantity: 1},
 		{Denomination: 5, Quantity: 1},
@@ -28,15 +28,15 @@ func TestCalculateChangeUsesAvailableBills(t *testing.T) {
 }
 
 func TestFormatChangeResponseBuildsDisplayLines(t *testing.T) {
-	changeBills := []ChangeBill{
+	changeBills := []Bill{
 		{Denomination: 20, Quantity: 2},
 		{Denomination: 0.5, Quantity: 1},
 	}
 
 	got := formatChangeResponse(changeBills)
 	want := []ChangeLine{
-		{Text: "2 x €20 = 40"},
-		{Text: "1 x €0.5 = 0.5"},
+		{Text: "2 x €20 = €40"},
+		{Text: "1 x €0.5 = €0.5"},
 	}
 
 	assert.Equal(t, want, got)
