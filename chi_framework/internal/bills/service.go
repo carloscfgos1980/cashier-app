@@ -14,6 +14,7 @@ type Service interface {
 	GetBillByDenomination(ctx context.Context, denomination int32) (database.Bill, error)
 	CreateBill(ctx context.Context, denomination int32, quantity int32) (database.Bill, error)
 	UpdateBill(ctx context.Context, id pgtype.UUID, quantity int32) (database.Bill, error)
+	GetBillsTotalAmount(ctx context.Context) (int64, error)
 }
 
 // svc defines the struct for the users service
@@ -136,4 +137,29 @@ func (s *svc) UpdateBill(ctx context.Context, id pgtype.UUID, quantity int32) (d
 	}
 
 	return bill, nil
+}
+
+func (s *svc) GetBillsTotalAmount(ctx context.Context) (int64, error) {
+	// start a transaction
+	tx, err := s.db.Begin(ctx)
+	if err != nil {
+		return 0, err
+	}
+	defer tx.Rollback(ctx)
+
+	// create a new Queries instance with the transaction
+	repo := database.New(tx)
+
+	// get the total amount from the repository
+	totalAmount, err := repo.GetBillsTotalAmount(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	// commit the transaction
+	if err := tx.Commit(ctx); err != nil {
+		return 0, err
+	}
+
+	return totalAmount, nil
 }

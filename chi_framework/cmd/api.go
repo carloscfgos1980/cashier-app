@@ -51,6 +51,7 @@ func (app *application) mount() http.Handler {
 	billsHandler := bills.NewHandler(billsService)
 	r.Get("/api/bills", billsHandler.GetBills)
 	r.Post("/api/bills", billsHandler.BillsCreateUpdate)
+	r.Post("/api/change", billsHandler.GetChange)
 	return r
 }
 

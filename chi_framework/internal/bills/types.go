@@ -18,3 +18,14 @@ type BillRequest struct {
 	Denomination float32 `json:"denomination"`
 	Quantity     int32   `json:"quantity"`
 }
+
+// Transaction represents the request body for the change calculation.
+type TransactionRequest struct {
+	AmountDue  float32 `json:"amount_due"`
+	AmountPaid float32 `json:"amount_paid"`
+}
+
+// ChangeLine represents a line in the change response.
+type ChangeLine struct {
+	Text string `json:"text"`
+}
