@@ -2,6 +2,7 @@ package bills
 
 import (
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -196,7 +197,12 @@ func formatEuroAmount(value float64) string {
 // calculateChange calculates the change to be given based on the available bills.
 func calculateChange(changeAmountCents int32, bills []database.Bill) ([]BillResponse, error) {
 	changeBills := make([]BillResponse, 0)
-	for _, bill := range bills {
+	sortedBills := append([]database.Bill(nil), bills...)
+	sort.Slice(sortedBills, func(i, j int) bool {
+		return sortedBills[i].Denomination > sortedBills[j].Denomination
+	})
+
+	for _, bill := range sortedBills {
 		if changeAmountCents <= 0 {
 			break
 		}
