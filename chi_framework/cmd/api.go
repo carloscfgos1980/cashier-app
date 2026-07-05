@@ -50,6 +50,7 @@ func (app *application) mount() http.Handler {
 	billsService := bills.NewService(database.New(app.db), app.db)
 	billsHandler := bills.NewHandler(billsService)
 	r.Get("/api/bills", billsHandler.GetBills)
+	r.Post("/api/bills", billsHandler.BillsCreateUpdate)
 	return r
 }
 

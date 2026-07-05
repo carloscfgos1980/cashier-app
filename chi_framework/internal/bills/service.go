@@ -5,11 +5,15 @@ import (
 
 	"github.com/carloscfgos1980/cashier-app/internal/database"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // Service defines the interface for the users service
 type Service interface {
 	GetBills(ctx context.Context) ([]database.Bill, error)
+	GetBillByDenomination(ctx context.Context, denomination int32) (database.Bill, error)
+	CreateBill(ctx context.Context, denomination int32, quantity int32) (database.Bill, error)
+	UpdateBill(ctx context.Context, id pgtype.UUID, quantity int32) (database.Bill, error)
 }
 
 // svc defines the struct for the users service
@@ -49,4 +53,87 @@ func (s *svc) GetBills(ctx context.Context) ([]database.Bill, error) {
 	}
 
 	return bills, nil
+}
+
+func (s *svc) GetBillByDenomination(ctx context.Context, denomination int32) (database.Bill, error) {
+	// start a transaction
+	tx, err := s.db.Begin(ctx)
+	if err != nil {
+		return database.Bill{}, err
+	}
+	defer tx.Rollback(ctx)
+
+	// create a new Queries instance with the transaction
+	repo := database.New(tx)
+
+	// get the bill from the repository
+	bill, err := repo.GetBillByDenomination(ctx, denomination)
+	if err != nil {
+		return database.Bill{}, err
+	}
+
+	// commit the transaction
+	if err := tx.Commit(ctx); err != nil {
+		return database.Bill{}, err
+	}
+
+	return bill, nil
+}
+
+func (s *svc) CreateBill(ctx context.Context, denomination int32, quantity int32) (database.Bill, error) {
+	// start a transaction
+	tx, err := s.db.Begin(ctx)
+	if err != nil {
+		return database.Bill{}, err
+	}
+	defer tx.Rollback(ctx)
+
+	// create a new Queries instance with the transaction
+	repo := database.New(tx)
+
+	// create the bill in the repository
+	params := database.CreateBillParams{
+		Denomination: denomination,
+		Quantity:     quantity,
+	}
+	bill, err := repo.CreateBill(ctx, params)
+	if err != nil {
+		return database.Bill{}, err
+	}
+
+	// commit the transaction
+	if err := tx.Commit(ctx); err != nil {
+		return database.Bill{}, err
+	}
+
+	return bill, nil
+}
+
+func (s *svc) UpdateBill(ctx context.Context, id pgtype.UUID, quantity int32) (database.Bill, error) {
+	// start a transaction
+	tx, err := s.db.Begin(ctx)
+	if err != nil {
+		return database.Bill{}, err
+	}
+	defer tx.Rollback(ctx)
+
+	// create a new Queries instance with the transaction
+	repo := database.New(tx)
+
+	// update the bill in the repository
+	params := database.UpdateBillParams{
+		ID:       id,
+		Quantity: quantity,
+	}
+	bill, err := repo.UpdateBill(ctx, params)
+	if err != nil {
+		return database.Bill{}, err
+	}
+
+	// commit the transaction
+	if err := tx.Commit(ctx); err != nil {
+		return database.Bill{}, err
+	}
+
+	return bill, nil
 }
