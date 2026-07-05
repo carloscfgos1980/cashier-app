@@ -33,7 +33,7 @@ func (h *handler) GetBills(w http.ResponseWriter, r *http.Request) {
 			ID:           bill.ID,
 			CreatedAt:    bill.CreatedAt,
 			UpdatedAt:    bill.UpdatedAt,
-			Denomination: float32(bill.Denomination),
+			Denomination: float32(bill.Denomination) / 100, // convert from cents to dollars,
 			Quantity:     bill.Quantity,
 		})
 	}

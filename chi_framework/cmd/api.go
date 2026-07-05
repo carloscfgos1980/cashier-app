@@ -7,6 +7,7 @@ import (
 
 	"github.com/carloscfgos1980/cashier-app/internal/bills"
 	"github.com/carloscfgos1980/cashier-app/internal/database"
+	"github.com/carloscfgos1980/cashier-app/internal/json"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -45,13 +46,24 @@ func (app *application) mount() http.Handler {
 
 	// health check endpoint
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("all good for now"))
+		health := make(map[string]string)
+		health["status"] = "ok"
+		health["version"] = "1.0.0"
+		health["message"] = "Server is running"
+		if err := json.WriteJSON(w, http.StatusOK, health); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	})
+
 	billsService := bills.NewService(database.New(app.db), app.db)
 	billsHandler := bills.NewHandler(billsService)
 	r.Get("/api/bills", billsHandler.GetBills)
 	r.Post("/api/bills", billsHandler.BillsCreateUpdate)
 	r.Post("/api/change", billsHandler.GetChange)
+
+	// Serve the frontend client from the client/ directory.
+	r.Handle("/*", http.FileServer(http.Dir("client")))
 	return r
 }
 
