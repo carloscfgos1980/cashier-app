@@ -5,6 +5,9 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/carloscfgos1980/cashier-app/internal/bills"
+	"github.com/carloscfgos1980/cashier-app/internal/database"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jackc/pgx/v5"
@@ -32,7 +35,6 @@ func (app *application) mount() http.Handler {
 	r := chi.NewRouter()
 	// set up middleware
 	r.Use(middleware.RequestID)
-	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
@@ -45,6 +47,9 @@ func (app *application) mount() http.Handler {
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("all good for now"))
 	})
+	billsService := bills.NewService(database.New(app.db), app.db)
+	billsHandler := bills.NewHandler(billsService)
+	r.Get("/api/bills", billsHandler.GetBills)
 	return r
 }
 
