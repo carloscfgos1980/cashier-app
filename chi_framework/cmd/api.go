@@ -3,6 +3,8 @@ package main
 import (
 	"log"
 	"net/http"
+	"runtime"
+	"sync/atomic"
 	"time"
 
 	"github.com/carloscfgos1980/cashier-app/internal/bills"
@@ -15,8 +17,10 @@ import (
 )
 
 type application struct {
-	config config
-	db     *pgx.Conn
+	config       config
+	db           *pgx.Conn
+	requestCount atomic.Uint64
+	startedAt    time.Time
 }
 
 // config holds the configuration for the application
@@ -31,6 +35,9 @@ type dbConfig struct {
 }
 
 func (app *application) mount() http.Handler {
+	if app.startedAt.IsZero() {
+		app.startedAt = time.Now().UTC()
+	}
 
 	// create a new router
 	r := chi.NewRouter()
@@ -38,6 +45,12 @@ func (app *application) mount() http.Handler {
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+	r.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			app.requestCount.Add(1)
+			next.ServeHTTP(w, r)
+		})
+	})
 
 	// Set a timeout value on the request context (ctx), that will signal
 	// through ctx.Done() that the request has timed out and further
@@ -51,6 +64,26 @@ func (app *application) mount() http.Handler {
 		health["version"] = "1.0.0"
 		health["message"] = "Server is running"
 		if err := json.WriteJSON(w, http.StatusOK, health); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	})
+
+	r.Get("/metrics", func(w http.ResponseWriter, r *http.Request) {
+		var mem runtime.MemStats
+		runtime.ReadMemStats(&mem)
+
+		metrics := map[string]any{
+			"uptime_seconds":      time.Since(app.startedAt).Seconds(),
+			"requests_total":      app.requestCount.Load(),
+			"goroutines":          runtime.NumGoroutine(),
+			"memory_alloc_bytes":  mem.Alloc,
+			"memory_heap_inuse":   mem.HeapInuse,
+			"memory_sys_bytes":    mem.Sys,
+			"gc_cycles_completed": mem.NumGC,
+		}
+
+		if err := json.WriteJSON(w, http.StatusOK, metrics); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}

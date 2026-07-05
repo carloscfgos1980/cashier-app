@@ -5,6 +5,7 @@ import (
 	"log"
 	"log/slog"
 	"os"
+	"time"
 
 	"github.com/carloscfgos1980/cashier-app/internal/env"
 	"github.com/jackc/pgx/v5"
@@ -44,8 +45,9 @@ func main() {
 	logger.Info("successfully connected to database", "dsn", cfg.db.dsn)
 	// create the application
 	api := &application{
-		config: cfg,
-		db:     conn,
+		config:    cfg,
+		db:        conn,
+		startedAt: time.Now().UTC(),
 	}
 	// run the application
 	if err := api.run(api.mount()); err != nil {
