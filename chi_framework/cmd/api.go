@@ -16,6 +16,7 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
+// application holds the application-wide dependencies for the HTTP server
 type application struct {
 	config       config
 	db           *pgx.Conn
@@ -34,6 +35,7 @@ type dbConfig struct {
 	dsn string
 }
 
+// mount sets up the routes and middleware for the HTTP server
 func (app *application) mount() http.Handler {
 	if app.startedAt.IsZero() {
 		app.startedAt = time.Now().UTC()
