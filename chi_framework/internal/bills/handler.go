@@ -94,7 +94,9 @@ func (h *handler) BillsCreateUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// GetChange calculates the change to be given based on the amount paid and the amount due, and returns the change as a JSON response
 func (h *handler) GetChange(w http.ResponseWriter, r *http.Request) {
+	// Read the request body into a TransactionRequest struct
 	var transaction TransactionRequest
 	if err := json.ReadJSON(r, &transaction); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -122,33 +124,38 @@ func (h *handler) GetChange(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Not enough bills to give change", http.StatusBadRequest)
 		return
 	}
-	bills, err := h.service.GetBills(r.Context())
+	// Get the available bills from the database.
+	dbBills, err := h.service.GetBills(r.Context())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	// Calculate the change to be given using the available bills.
-	changeBills, err := calculateChange(changeAmountCents, bills)
+	changeBills, err := calculateChange(changeAmountCents, dbBills)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	// Check if there are enough bills to give change.
 	if len(changeBills) == 0 {
 		http.Error(w, "Not enough bills to give change", http.StatusBadRequest)
 		return
 	}
 	// update the quantities of the bills in the database
 	for _, bill := range changeBills {
+		// Fetch the bill from the database by its denomination
 		dbBill, err := h.service.GetBillByDenomination(r.Context(), int32(bill.Denomination*100))
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		// calculate the new quantity of the bill after giving change
 		newQuantity := dbBill.Quantity - bill.Quantity
 		if newQuantity < 0 {
 			http.Error(w, "Not enough bills to give change", http.StatusBadRequest)
 			return
 		}
+		// update the bill quantity in the database
 		_, err = h.service.UpdateBill(r.Context(), dbBill.ID, newQuantity)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -157,6 +164,7 @@ func (h *handler) GetChange(w http.ResponseWriter, r *http.Request) {
 	}
 	// Format the change response.
 	changeResponse := formatChangeResponse(changeBills)
+	// Write the change response as JSON.
 	if err := json.WriteJSON(w, http.StatusOK, changeResponse); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -164,6 +172,7 @@ func (h *handler) GetChange(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// ValidateDenomination checks if the given denomination is valid based on predefined denominations.
 func ValidateDenomination(denomination float32) bool {
 	switch denomination {
 	case 100.00, 50.00, 20.00, 10.00, 5.00, 1.00, 0.50, 0.20, 0.10, 0.05, 0.01:

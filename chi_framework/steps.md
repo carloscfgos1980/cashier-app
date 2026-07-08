@@ -79,3 +79,44 @@ Define a struct to format the response
 	billsService := bills.NewService(database.New(app.db), app.db)
 	billsHandler := bills.NewHandler(billsService)
 	r.Post("/api/bills", billsHandler.BillsCreateUpdate)
+
+## 4. Get change
+
+### types.go
+- Transaction represents the request body for the change calculation.
+- ChangeLine represents a line in the change response.
+
+### service.go
+- GetBillsTotalAmount retrieves the total amount of all bills in the database
+- Add "GetBillsTotalAmount" to service interface
+
+### handler.go. GetChange
+
+**Auxiliary fucntions**
+- ValidateDenomination checks if the given denomination is valid based on predefined denominations.
+- formatChangeResponse formats the change bills into a slice of ChangeLine for the response.
+- formatChangeLine formats a single line of change information.
+- formatEuroAmount formats a float64 value as a Euro currency string.
+- calculateChange calculates the change to be given based on the available bills.
+
+1. GetChange calculates the change to be given based on the amount paid and the amount due, and returns the change as a JSON response
+1.1 Read the request body into a TransactionRequest struct
+1.2 Validate the input amounts.
+1.3 Calculate the change amount.
+1.4 Convert the change amount to cents to avoid floating point precision issues.
+1.5 Get the total amount of bills in the database.
+1.6 Check if there are enough bills to give change.
+1.7 Get the available bills from the database.
+1.8 Calculate the change to be given using the available bills.
+1.9 Calculate the change to be given using the available bills.
+1.10 update the quantities of the bills in the database
+1.10.1 Fetch the bill from the database by its denomination
+1.10.2 calculate the new quantity of the bill after giving change
+1.10.3 update the bill quantity in the database
+1.11 Format the change response.
+1.12 Write the change response as JSON.
+
+### api
+	billsService := bills.NewService(database.New(app.db), app.db)
+	billsHandler := bills.NewHandler(billsService)
+	r.Post("/api/change", billsHandler.GetChange)

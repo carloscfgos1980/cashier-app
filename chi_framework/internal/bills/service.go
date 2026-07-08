@@ -143,6 +143,7 @@ func (s *svc) UpdateBill(ctx context.Context, id pgtype.UUID, quantity int32) (d
 	return bill, nil
 }
 
+// GetBillsTotalAmount retrieves the total amount of all bills in the database
 func (s *svc) GetBillsTotalAmount(ctx context.Context) (int64, error) {
 	// start a transaction
 	tx, err := s.db.Begin(ctx)
