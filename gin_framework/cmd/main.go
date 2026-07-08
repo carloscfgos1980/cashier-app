@@ -51,6 +51,10 @@ func main() {
 	router.GET("/api/bills", handlers.GetBillsHandler(cfg))
 	router.POST("/api/bills", handlers.BillsCreateUpdateHandler(cfg))
 	router.POST("/api/change", handlers.GetChangeHandler(cfg))
+	router.StaticFile("/", "./client/index.html")
+	router.StaticFile("/index.html", "./client/index.html")
+	router.StaticFile("/app.js", "./client/app.js")
+	router.StaticFile("/styles.css", "./client/styles.css")
 
 	// Start the server on the specified port
 	if err := router.Run(":" + cfg.Port); err != nil {

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"math"
 	"net/http"
 	"sort"
 	"strconv"
@@ -46,7 +47,7 @@ func GetBillsHandler(cfg *config.Config) gin.HandlerFunc {
 			})
 		}
 
-		c.JSON(http.StatusOK, gin.H{"bills": response})
+		c.JSON(http.StatusOK, response)
 	}
 }
 
@@ -163,6 +164,31 @@ func GetChangeHandler(cfg *config.Config) gin.HandlerFunc {
 			}
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to calculate change"})
 			return
+		}
+
+		// Persist the dispensed change so the current bill inventory stays in sync.
+		for _, bill := range changeBills {
+			denominationCents := int32(math.Round(float64(bill.Denomination) * 100))
+			dbBill, err := cfg.DB.GetBillByDenomination(c, denominationCents)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update bill inventory"})
+				return
+			}
+
+			newQuantity := dbBill.Quantity - bill.Quantity
+			if newQuantity < 0 {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Insufficient funds in the register for change"})
+				return
+			}
+
+			_, err = cfg.DB.UpdateBill(c, database.UpdateBillParams{
+				ID:       dbBill.ID,
+				Quantity: newQuantity,
+			})
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update bill inventory"})
+				return
+			}
 		}
 
 		// Format the change response.

@@ -184,7 +184,12 @@ async function checkHealth() {
 
 document.getElementById("billsForm").addEventListener("submit", async (event) => {
   event.preventDefault();
-  const form = new FormData(event.currentTarget);
+  const formElement = document.getElementById("billsForm");
+  if (!formElement) {
+    setLog("Bills form not found", true);
+    return;
+  }
+  const form = new FormData(formElement);
   const denomination = Number(form.get("denomination"));
   const inputQuantity = Number(form.get("quantity"));
   const existingBill = currentBills.find((bill) => Number(bill.denomination) === denomination);
@@ -214,7 +219,6 @@ document.getElementById("billsForm").addEventListener("submit", async (event) =>
     logPanel.classList.remove("error");
 
     setLog(existingBill ? "Bill updated" : "Bill saved", false);
-    event.currentTarget.reset();
     await loadBills();
   } catch (error) {
     setLog(error.message, true);
@@ -223,7 +227,12 @@ document.getElementById("billsForm").addEventListener("submit", async (event) =>
 
 document.getElementById("changeForm").addEventListener("submit", async (event) => {
   event.preventDefault();
-  const form = new FormData(event.currentTarget);
+  const formElement = document.getElementById("changeForm");
+  if (!formElement) {
+    setLog("Change form not found", true);
+    return;
+  }
+  const form = new FormData(formElement);
   const payload = {
     amount_due: Number(form.get("amount_due")),
     amount_paid: Number(form.get("amount_paid")),
