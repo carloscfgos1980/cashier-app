@@ -57,6 +57,7 @@ func (s *svc) GetBills(ctx context.Context) ([]database.Bill, error) {
 	return bills, nil
 }
 
+// GetBillByDenomination retrieves a bill by its denomination from the database
 func (s *svc) GetBillByDenomination(ctx context.Context, denomination int32) (database.Bill, error) {
 	// start a transaction
 	tx, err := s.db.Begin(ctx)
@@ -82,6 +83,7 @@ func (s *svc) GetBillByDenomination(ctx context.Context, denomination int32) (da
 	return bill, nil
 }
 
+// CreateBill creates a new bill in the database
 func (s *svc) CreateBill(ctx context.Context, denomination int32, quantity int32) (database.Bill, error) {
 	// start a transaction
 	tx, err := s.db.Begin(ctx)
@@ -111,6 +113,7 @@ func (s *svc) CreateBill(ctx context.Context, denomination int32, quantity int32
 	return bill, nil
 }
 
+// UpdateBill updates the quantity of a bill in the database
 func (s *svc) UpdateBill(ctx context.Context, id pgtype.UUID, quantity int32) (database.Bill, error) {
 	// start a transaction
 	tx, err := s.db.Begin(ctx)

@@ -13,7 +13,7 @@ type BillResponse struct {
 	Quantity     int32            `json:"quantity"`
 }
 
-// Bill represents a bill denomination and its quantity.
+// BillRequest represents a bill denomination and its quantity.
 type BillRequest struct {
 	Denomination float32 `json:"denomination"`
 	Quantity     int32   `json:"quantity"`

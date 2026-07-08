@@ -45,21 +45,25 @@ func (h *handler) GetBills(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// BillsCreateUpdate handles the creation or update of bills based on the request body
 func (h *handler) BillsCreateUpdate(w http.ResponseWriter, r *http.Request) {
+	// Read the request body into a slice of BillRequest
 	var bills []BillRequest
 	if err := json.ReadJSON(r, &bills); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
+	// Validate and process each bill in the request
 	for _, b := range bills {
 		demon := b.Denomination
+		// Validate the denomination
 		if !ValidateDenomination(demon) {
 			http.Error(w, "Invalid denomination", http.StatusBadRequest)
 			return
 		}
 		// convert the denomination from float32 to int (cents) to avoid floating point precision issues
 		demonCents := int32(demon * 100)
+		// Fetch the bill from the database by its denomination
 		dbBill, err := h.service.GetBillByDenomination(r.Context(), demonCents)
 		if err != nil {
 			if err.Error() == "no rows in result set" {
