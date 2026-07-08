@@ -120,3 +120,6 @@ Define a struct to format the response
 	billsService := bills.NewService(database.New(app.db), app.db)
 	billsHandler := bills.NewHandler(billsService)
 	r.Post("/api/change", billsHandler.GetChange)
+
+Note:
+Client, testing and metrics made with copilot
