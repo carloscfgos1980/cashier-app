@@ -49,6 +49,7 @@ func main() {
 		})
 	})
 	router.GET("/api/bills", handlers.GetBillsHandler(cfg))
+	router.POST("/api/bills", handlers.BillsCreateUpdateHandler(cfg))
 
 	// Start the server on the specified port
 	if err := router.Run(":" + cfg.Port); err != nil {
