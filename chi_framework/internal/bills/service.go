@@ -31,6 +31,7 @@ func NewService(repo *database.Queries, db *pgx.Conn) Service {
 	}
 }
 
+// GetBills retrieves all bills from the database
 func (s *svc) GetBills(ctx context.Context) ([]database.Bill, error) {
 	// start a transaction
 	tx, err := s.db.Begin(ctx)

@@ -30,3 +30,26 @@ mod init github.com/carloscfgos1980/cashier-app
 5.4 database connection
 5.5 create the application
 5.6 run the application
+
+## 2. GetBills route
+
+### types. go
+Define a struct to format the response
+
+### service.go
+- Service defines the interface for the users service
+- svc defines the struct for the users service
+- NewService creates a new service for the users package
+- GetBills method retrieves all bills from the database
+- Add GetBills method to service interface
+
+
+### handler
+- handler is the HTTP handler for bills endpoints
+- NewHandler creates a new handler for bills endpoints
+- GetBills retrieves all bills from the database and returns them as a JSON response
+
+### api.go
+	billsService := bills.NewService(database.New(app.db), app.db)
+	billsHandler := bills.NewHandler(billsService)
+	r.Get("/api/bills", billsHandler.GetBills)

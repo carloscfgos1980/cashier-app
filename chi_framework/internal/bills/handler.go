@@ -10,18 +10,19 @@ import (
 	"github.com/carloscfgos1980/cashier-app/internal/json"
 )
 
-// handler is the HTTP handler for users endpoints
+// handler is the HTTP handler for bills endpoints
 type handler struct {
 	service Service
 }
 
-// NewHandler creates a new handler for users endpoints
+// NewHandler creates a new handler for bills endpoints
 func NewHandler(service Service) *handler {
 	return &handler{
 		service: service,
 	}
 }
 
+// GetBills retrieves all bills from the database and returns them as a JSON response
 func (h *handler) GetBills(w http.ResponseWriter, r *http.Request) {
 	bills, err := h.service.GetBills(r.Context())
 	if err != nil {
