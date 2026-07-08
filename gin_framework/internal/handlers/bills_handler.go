@@ -1,7 +1,11 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
+	"sort"
+	"strconv"
+	"strings"
 
 	"github.com/carloscfgos1980/cashier-app/internal/config"
 	"github.com/carloscfgos1980/cashier-app/internal/database"
@@ -55,6 +59,10 @@ func BillsCreateUpdateHandler(cfg *config.Config) gin.HandlerFunc {
 		}
 		for _, b := range bills {
 			demon := b.Denomination
+			if b.Quantity < 0 {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Quantity must be greater than or equal to 0"})
+				return
+			}
 			// Validate the denomination
 			if !ValidateDenomination(demon) {
 				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid denomination"})
@@ -81,7 +89,7 @@ func BillsCreateUpdateHandler(cfg *config.Config) gin.HandlerFunc {
 				// Bill exists, update the quantity
 				_, err := cfg.DB.UpdateBill(c, database.UpdateBillParams{
 					ID:       dbBill.ID,
-					Quantity: dbBill.Quantity - b.Quantity,
+					Quantity: b.Quantity,
 				})
 				if err != nil {
 					c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update bill"})
@@ -102,4 +110,124 @@ func ValidateDenomination(denomination float32) bool {
 	default:
 		return false
 	}
+}
+
+type TransactionRequest struct {
+	AmountDue  float32 `json:"amount_due"`
+	AmountPaid float32 `json:"amount_paid"`
+}
+
+// ChangeLine represents a line in the change response.
+type ChangeLine struct {
+	Text string `json:"text"`
+}
+
+func GetChangeHandler(cfg *config.Config) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var request TransactionRequest
+		if err := c.ShouldBindJSON(&request); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+			return
+		}
+		if request.AmountPaid < request.AmountDue {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Amount paid is less than amount due"})
+			return
+		}
+
+		changeAmount := request.AmountPaid - request.AmountDue
+		changeAmountCents := int64(changeAmount * 100) // Convert to cents
+
+		totalAmointCents, err := cfg.DB.GetBillsTotalAmount(c)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve total amount"})
+			return
+		}
+
+		if changeAmountCents > totalAmointCents {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Insufficient funds in the register for change"})
+			return
+		}
+		// Get the available bills from the database.
+		dbBills, err := cfg.DB.GetBills(c)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve bills"})
+			return
+		}
+
+		// Calculate the change to be given.
+		changeBills, err := calculateChange(int32(changeAmountCents), dbBills)
+		if err != nil {
+			if err.Error() == "insufficient funds in the register for change" {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Insufficient funds in the register for change"})
+				return
+			}
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to calculate change"})
+			return
+		}
+
+		// Format the change response.
+		response := formatChangeResponse(changeBills)
+
+		c.JSON(http.StatusOK, response)
+	}
+}
+
+// formatChangeResponse formats the change bills into a slice of ChangeLine for the response.
+func formatChangeResponse(changeBills []BillResponse) []ChangeLine {
+	lines := make([]ChangeLine, 0, len(changeBills))
+	for _, bill := range changeBills {
+		billTotal := float64(bill.Denomination) * float64(bill.Quantity)
+		lines = append(lines, ChangeLine{Text: formatChangeLine(bill.Quantity, bill.Denomination, billTotal)})
+	}
+	return lines
+}
+
+// formatChangeLine formats a single line of change information.
+func formatChangeLine(quantity int32, denomination float32, total float64) string {
+	quantityText := strconv.FormatInt(int64(quantity), 10)
+	denominationText := formatEuroAmount(float64(denomination))
+	totalText := formatEuroAmount(total)
+	return quantityText + " x " + denominationText + " = " + totalText
+}
+
+// formatEuroAmount formats a float64 value as a Euro currency string.
+func formatEuroAmount(value float64) string {
+	formatted := strconv.FormatFloat(value, 'f', 2, 64)
+	formatted = strings.TrimRight(formatted, "0")
+	formatted = strings.TrimRight(formatted, ".")
+	return "€" + formatted
+}
+
+// calculateChange calculates the change to be given based on the available bills.
+func calculateChange(changeAmountCents int32, bills []database.Bill) ([]BillResponse, error) {
+	changeBills := make([]BillResponse, 0)
+	sortedBills := append([]database.Bill(nil), bills...)
+	sort.Slice(sortedBills, func(i, j int) bool {
+		return sortedBills[i].Denomination > sortedBills[j].Denomination
+	})
+
+	for _, bill := range sortedBills {
+		if changeAmountCents <= 0 {
+			break
+		}
+		billValue := bill.Denomination
+		billQuantity := bill.Quantity
+
+		if billValue <= changeAmountCents && billQuantity > 0 {
+			numBills := changeAmountCents / billValue
+			if numBills > billQuantity {
+				numBills = billQuantity
+			}
+			changeBills = append(changeBills, BillResponse{
+				Denomination: float32(billValue) / 100,
+				Quantity:     numBills,
+			})
+			changeAmountCents -= numBills * billValue
+		}
+
+	}
+	if changeAmountCents > 0 {
+		return nil, errors.New("insufficient funds in the register for change")
+	}
+	return changeBills, nil
 }
