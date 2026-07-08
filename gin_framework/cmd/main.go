@@ -49,6 +49,7 @@ func main() {
 		})
 	})
 	router.GET("/api/bills", handlers.GetBillsHandler(cfg))
+	router.GET("/metrics", handlers.GetMetricsHandler(cfg))
 	router.POST("/api/bills", handlers.BillsCreateUpdateHandler(cfg))
 	router.POST("/api/change", handlers.GetChangeHandler(cfg))
 	router.StaticFile("/", "./client/index.html")
