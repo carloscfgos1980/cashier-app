@@ -10,6 +10,7 @@ import (
 	_ "github.com/lib/pq"
 
 	"github.com/carloscfgos1980/cashier-app/internal/config"
+	"github.com/carloscfgos1980/cashier-app/internal/handlers"
 )
 
 func main() {
@@ -47,6 +48,7 @@ func main() {
 			"message": "Cashier API is healthy",
 		})
 	})
+	router.GET("/api/bills", handlers.GetBillsHandler(cfg))
 
 	// Start the server on the specified port
 	if err := router.Run(":" + cfg.Port); err != nil {
