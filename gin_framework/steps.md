@@ -84,3 +84,26 @@
 5.11 Return the formatted change response as JSON.
 6. main. Define the API routes and their corresponding handlers
 	router.POST("/api/change", handlers.GetChangeHandler(cfg))
+
+## 5. Serve client
+	router.StaticFile("/", "./client/index.html")
+	router.StaticFile("/index.html", "./client/index.html")
+	router.StaticFile("/app.js", "./client/app.js")
+	router.StaticFile("/styles.css", "./client/styles.css")
+
+## 6. TestGetChangeRoute_Integration
+1. Check for the TEST_DB_URL environment variable, fallback to DB_URL if not set.
+2. Connect to the database.
+3. Create a new database queries instance.
+4. Clear the bills table before running the test to ensure a clean state.
+5. Insert test bills into the database.
+6. Create a config instance with the database queries.
+7. Set Gin to test mode and create a new router for testing.
+8. Create a new Gin router and register the GetChangeHandler route.
+9. Register the GetChangeHandler route with the router.
+10. Prepare the request body for the change request.
+11. Create a new HTTP request to the /api/change endpoint with the prepared body.
+12. Serve the HTTP request using the router and record the response.
+13. Unmarshal the response body into a slice of ChangeLine structs.
+14. Check the first change line for the 5 euro bill.
+15. Check the second change line for the 2 euro bill.
