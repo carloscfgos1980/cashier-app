@@ -124,6 +124,7 @@ func ValidateDenomination(denomination float32) bool {
 	}
 }
 
+// TransactionRequest represents the request body for a transaction.
 type TransactionRequest struct {
 	AmountDue  float32 `json:"amount_due"`
 	AmountPaid float32 `json:"amount_paid"`
@@ -134,28 +135,32 @@ type ChangeLine struct {
 	Text string `json:"text"`
 }
 
+// GetChangeHandler handles the change calculation and updates the bill inventory accordingly.
 func GetChangeHandler(cfg *config.Config) gin.HandlerFunc {
+	// Return a handler function that processes the request to calculate change and update the bill inventory.
 	return func(c *gin.Context) {
+		// Parse the request body into a TransactionRequest struct
 		var request TransactionRequest
 		if err := c.ShouldBindJSON(&request); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 			return
 		}
+		// Validate that the amount paid is not less than the amount due
 		if request.AmountPaid < request.AmountDue {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Amount paid is less than amount due"})
 			return
 		}
-
+		// Calculate the change amount in cents to avoid floating point precision issues
 		changeAmount := request.AmountPaid - request.AmountDue
 		changeAmountCents := int64(changeAmount * 100) // Convert to cents
-
-		totalAmointCents, err := cfg.DB.GetBillsTotalAmount(c)
+		// Get the total amount of bills in the register to check if there are sufficient funds for change.
+		totalAmountIntCents, err := cfg.DB.GetBillsTotalAmount(c)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve total amount"})
 			return
 		}
-
-		if changeAmountCents > totalAmointCents {
+		// Check if there are sufficient funds in the register for change.
+		if changeAmountCents > totalAmountIntCents {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Insufficient funds in the register for change"})
 			return
 		}
@@ -180,18 +185,19 @@ func GetChangeHandler(cfg *config.Config) gin.HandlerFunc {
 		// Persist the dispensed change so the current bill inventory stays in sync.
 		for _, bill := range changeBills {
 			denominationCents := int32(math.Round(float64(bill.Denomination) * 100))
+			// Retrieve the bill from the database to get its current quantity.
 			dbBill, err := cfg.DB.GetBillByDenomination(c, denominationCents)
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update bill inventory"})
 				return
 			}
-
+			// Calculate the new quantity after dispensing the change.
 			newQuantity := dbBill.Quantity - bill.Quantity
 			if newQuantity < 0 {
 				c.JSON(http.StatusBadRequest, gin.H{"error": "Insufficient funds in the register for change"})
 				return
 			}
-
+			// Update the bill quantity in the database.
 			_, err = cfg.DB.UpdateBill(c, database.UpdateBillParams{
 				ID:       dbBill.ID,
 				Quantity: newQuantity,
@@ -204,7 +210,7 @@ func GetChangeHandler(cfg *config.Config) gin.HandlerFunc {
 
 		// Format the change response.
 		response := formatChangeResponse(changeBills)
-
+		// Return the formatted change response as JSON.
 		c.JSON(http.StatusOK, response)
 	}
 }
@@ -237,34 +243,41 @@ func formatEuroAmount(value float64) string {
 
 // calculateChange calculates the change to be given based on the available bills.
 func calculateChange(changeAmountCents int32, bills []database.Bill) ([]BillResponse, error) {
+	// Create a slice to hold the change bills to be returned.
 	changeBills := make([]BillResponse, 0)
+	// Sort the bills in descending order of denomination to give the largest bills first.
 	sortedBills := append([]database.Bill(nil), bills...)
 	sort.Slice(sortedBills, func(i, j int) bool {
 		return sortedBills[i].Denomination > sortedBills[j].Denomination
 	})
-
+	// Iterate over the sorted bills and calculate how many of each denomination can be given as change.
 	for _, bill := range sortedBills {
+		// If the change amount is zero or less, break out of the loop.
 		if changeAmountCents <= 0 {
 			break
 		}
 		billValue := bill.Denomination
 		billQuantity := bill.Quantity
-
+		// If the bill value is less than or equal to the change amount and there are bills available, calculate how many can be given.
 		if billValue <= changeAmountCents && billQuantity > 0 {
 			numBills := changeAmountCents / billValue
 			if numBills > billQuantity {
 				numBills = billQuantity
 			}
+			// Append the calculated number of bills to the changeBills slice.
 			changeBills = append(changeBills, BillResponse{
 				Denomination: float32(billValue) / 100,
 				Quantity:     numBills,
 			})
+			// Subtract the value of the given bills from the change amount.
 			changeAmountCents -= numBills * billValue
 		}
 
 	}
+	// If there is still change left to be given, return an error indicating insufficient funds.
 	if changeAmountCents > 0 {
 		return nil, errors.New("insufficient funds in the register for change")
 	}
+	// Return the calculated change bills.
 	return changeBills, nil
 }

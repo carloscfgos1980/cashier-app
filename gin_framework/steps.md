@@ -50,3 +50,37 @@
 4. Return bills after processing the request
 5. main. Define the API routes and their corresponding handlers
 	router.POST("/api/bills", handlers.BillsCreateUpdateHandler(cfg))
+
+## 4. Get change route
+1. TransactionRequest represents the request body for a transaction.
+2. ChangeLine represents a line in the change response.
+3. auxiliary fuctions for the response format
+- formatEuroAmount
+- formatChangeLine
+4. calculateChange calculates the change to be given based on the available bills.
+4.1 Create a slice to hold the change bills to be returned.
+4.2 Sort the bills in descending order of denomination to give the largest bills first. This is a save precaution, in this case unnecessary because I already have that condiction in the query
+4.3 Iterate over the sorted bills and calculate how many of each denomination can be given as change.
+4.3.1 If the change amount is zero or less, break out of the loop.
+4.3.2 If the bill value is less than or equal to the change amount and there are bills available, calculate how many can be given.
+4.3.3 Append the calculated number of bills to the changeBills slice.
+4.3.5 Subtract the value of the given bills from the change amount.
+4.4 If there is still change left to be given, return an error indicating insufficient funds.
+4.5 Return the calculated change bills.
+5. GetChangeHandler handles the change calculation and updates the bill inventory accordingly.
+5.1 Return a handler function that processes the request to calculate change and update the bill inventory.
+5.2 Parse the request body into a TransactionRequest struct
+5.3 Validate that the amount paid is not less than the amount due
+5.4 Calculate the change amount in cents to avoid floating point precision issues
+5.5 Get the total amount of bills in the register to check if there are sufficient funds for change.
+5.6 Check if there are sufficient funds in the register for change.
+5.7 Get the available bills from the database.
+5.8 Calculate the change to be given.
+5.9 Persist the dispensed change so the current bill inventory stays in sync.
+5.9.1 Retrieve the bill from the database to get its current quantity.
+5.9.2 Calculate the new quantity after dispensing the change.
+5.9.3 Update the bill quantity in the database.
+5.10 Format the change response.
+5.11 Return the formatted change response as JSON.
+6. main. Define the API routes and their corresponding handlers
+	router.POST("/api/change", handlers.GetChangeHandler(cfg))
