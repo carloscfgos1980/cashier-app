@@ -27,7 +27,9 @@ type BillRequest struct {
 	Quantity     int32   `json:"quantity"`
 }
 
+// GetBillsHandler retrieves all bills from the database and returns them in a formatted response.
 func GetBillsHandler(cfg *config.Config) gin.HandlerFunc {
+	// Return a handler function that retrieves bills from the database and formats the response.
 	return func(c *gin.Context) {
 		// Use cfg.DB to access the database and retrieve bills
 		bills, err := cfg.DB.GetBills(c)
@@ -37,6 +39,7 @@ func GetBillsHandler(cfg *config.Config) gin.HandlerFunc {
 		}
 		// Create a slice to hold the formatted bills for the response
 		var response []BillResponse
+		// Format each bill and append it to the response slice
 		for _, b := range bills {
 			response = append(response, BillResponse{
 				ID:           b.ID.String(),
@@ -46,7 +49,7 @@ func GetBillsHandler(cfg *config.Config) gin.HandlerFunc {
 				Quantity:     b.Quantity,
 			})
 		}
-
+		// Return the formatted bills as a JSON response
 		c.JSON(http.StatusOK, response)
 	}
 }
