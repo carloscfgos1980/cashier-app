@@ -107,3 +107,15 @@
 13. Unmarshal the response body into a slice of ChangeLine structs.
 14. Check the first change line for the 5 euro bill.
 15. Check the second change line for the 2 euro bill.
+
+## README
+- Description
+- Features
+- Tech Stack
+- Project Structure
+- Prerequisites
+- Environment Variables
+- Database Setup
+- Run the App
+- Available Routes
+- Test
