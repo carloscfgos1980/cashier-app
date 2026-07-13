@@ -14,7 +14,6 @@ import (
 )
 
 func main() {
-	// create a context
 
 	// Load configuration from environment variables
 	cfg, err := config.LoadConfig()
@@ -31,7 +30,7 @@ func main() {
 
 	// Create a new database queries instance
 	db := database.New(dbConn)
-
+	// Assign the database queries instance to the config
 	cfg.DB = db
 
 	// Initialize the Gin router
