@@ -22,6 +22,7 @@ type BillResponse struct {
 	Quantity     int32   `json:"quantity"`
 }
 
+// Define a struct to handle the request for creating or updating bills
 type BillRequest struct {
 	Denomination float32 `json:"denomination"`
 	Quantity     int32   `json:"quantity"`
@@ -54,15 +55,20 @@ func GetBillsHandler(cfg *config.Config) gin.HandlerFunc {
 	}
 }
 
+// BillsCreateUpdateHandler handles the creation or update of bills in the database.
 func BillsCreateUpdateHandler(cfg *config.Config) gin.HandlerFunc {
+	// Return a handler function that processes the request to create or update bills.
 	return func(c *gin.Context) {
+		// Parse the request body into a slice of BillRequest structs
 		var bills []BillRequest
 		if err := c.ShouldBindJSON(&bills); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 			return
 		}
+		// Iterate over each bill in the request and process it
 		for _, b := range bills {
 			demon := b.Denomination
+			// Validate the quantity
 			if b.Quantity < 0 {
 				c.JSON(http.StatusBadRequest, gin.H{"error": "Quantity must be greater than or equal to 0"})
 				return
@@ -74,6 +80,7 @@ func BillsCreateUpdateHandler(cfg *config.Config) gin.HandlerFunc {
 			}
 			// convert the denomination from float32 to int (cents) to avoid floating point precision issues
 			demonCents := int32(demon * 100)
+			// Check if the bill already exists in the database
 			dbBill, err := cfg.DB.GetBillByDenomination(c, demonCents)
 			if err != nil {
 				if err.Error() == "sql: no rows in result set" {
@@ -102,11 +109,12 @@ func BillsCreateUpdateHandler(cfg *config.Config) gin.HandlerFunc {
 			}
 
 		}
-
+		// Return bills after processing the request
 		c.JSON(http.StatusOK, bills)
 	}
 }
 
+// ValidateDenomination checks if the provided denomination is valid based on predefined denominations.
 func ValidateDenomination(denomination float32) bool {
 	switch denomination {
 	case 100.00, 50.00, 20.00, 10.00, 5.00, 1.00, 0.50, 0.20, 0.10, 0.05, 0.01:
